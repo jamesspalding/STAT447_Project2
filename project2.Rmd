@@ -6,5 +6,87 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = F, include = F)
+
+#Libraries
+library(tidyverse)
+library(readxl)
+library(DescTools)
+library(gt)
+library(gtExtras)
+library(gridExtra)
+library(ggpubr)
 ```
+
+```{r}
+data = read.csv("CervicalCancer.csv") %>% select(-"STDs.AIDS") #None of the patients had AIDS
+```
+
+## Introduction
+
+## Exploring the Data
+
+```{r, include = T}
+##### Summary Stats Table #####
+
+Term       = c("Age",
+               "Number of sexual partners",
+               "Age of first sexual intercourse", 
+               "Number of Pregnancies",
+               "Smoke",
+               "Years of Smoking",
+               "Packs Smoked/Year",
+               "Hormonal Contraceptives", 
+               "Years used Hormonal Contraceptives",
+               "IUD",
+               "Years used IUD",
+               "Has had STD",
+               "Condylomatosis", 
+               "Syphilis",
+               "Pelvic Inflammatory Disease",
+               "Genital Herpes",
+               "Molluscum Contagiosum",
+               "HIV",
+               "Hepatitis B",
+               "HPV",
+               "Positive for Cervical Cancer")
+
+Ratio = c()
+Mean = c()
+Min = c()
+Max = c()
+SD = c()
+#Obtain descriptive stats
+for(i in names(data)){
+  #Determine if percent or mean is applicable
+  if (length(unique(data[[i]])) == 2){
+    Ratio = c(Ratio, paste0(round(mean(data[[i]]),4) * 100, "%"))
+    Mean  = c(Mean, "")
+    Min   = c(Min, "")
+    Max   = c(Max, "")
+    SD    = c(SD, "")
+  }else{
+    Ratio = c(Ratio, "")
+    Mean  = c(Mean, round(mean(data[[i]]),2))
+    Min   = c(Min, min(data[[i]]))
+    Max   = c(Max, max(data[[i]]))
+    SD    = c(SD, round(sd(data[[i]]),2))
+  }
+}
+
+records = as.data.frame(t(as.data.frame(rbind(Term, Ratio, Mean, Min, Max, SD))))
+records %>%
+  gt() %>%
+  gt_theme_nytimes() %>%
+  tab_header(title="Table 1: Variables explained.") %>%
+  tab_spanner(label="Binary Terms", columns = Term) %>%
+  tab_spanner(label="Summary Statistics", columns = c(Ratio, Mean, Min, Max, SD))
+```
+
+
+
+## Statistical Methods
+
+## Results
+
+## Conclusion
