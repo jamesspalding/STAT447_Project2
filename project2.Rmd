@@ -112,6 +112,75 @@ records %>%
 
 ## Statistical Methods
 
+```{r}
+difference_function <- function(x, test_to_run = mean) {
+  
+  function_list <- list(
+    Cancer = c(x[Biopsy == 1]),
+    No_Cancer = c(x[Biopsy == 0])
+  )
+  
+  
+  dat1 <- function_list$Cancer
+  dat2 <- function_list$No_Cancer
+  
+  m=length(function_list$Cancer)
+  n=length(function_list$No_Cancer)
+  tot=m+n
+  Dobs=test_to_run(dat1)-test_to_run(dat2)
+
+  nperm=1000
+  Dperm=rep(0,nperm)
+  alldat=c(dat1,dat2)
+
+  for(i in 1:nperm){
+    index=sample(1:tot,m)
+    newdat1=alldat[index]
+    newdat2=alldat[-index]
+    Dperm[i]=test_to_run(newdat1)-test_to_run(newdat2)
+  }
+
+  pvalue=sum(abs(Dperm)>=abs(Dobs))/nperm
+  pvalue
+}
+
+to_test <- c(2,3,4,6,7,9,11)
+
+#to_test <- c(data$Number.of.sexual.partners,data$First.sexual.intercourse,data$Num.of.pregnancies,
+#             data$Smokes..years.,data$Smokes..packs.year.,data$Hormonal.Contraceptives..years.,
+#             data$IUD..years.)
+
+p_values_mean <- c()
+p_values_var <- c()
+p_values_median <- c()
+
+for(i in length(to_test)) {
+  p_values_mean[i] <- difference_function(to_test[i])
+  p_values_var[i] <- difference_function(to_test[i], var)
+  p_values_median[i] <- difference_function(to_test[i], median)
+}
+
+explanatory_variables <- c("Number of sexual partners","Age of first sexual intercourse","Num of pregnancies",
+                           "Years smoking", "Packs smoked a year", "Years using Hormonal Contraceptives",
+                           "Years using IUD")
+
+permutation_tests <- data.frame(
+  Variable = explanatory_variables$variables,
+  Pval_mean = p_values_mean,
+  Pval_var = p_values_var,
+  Pval_median = p_values_median
+)
+
+permutation_tests %>%
+  gt() %>%
+  gt_theme_nytimes() %>%
+  tab_header(title="Table : Probabilities of Two-Sample Permutation Tests")
+
+head(data)
+```
+
+
+
 ## Results
 
 ## Conclusion
