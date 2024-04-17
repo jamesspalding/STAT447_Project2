@@ -52,21 +52,25 @@ Term       = c("Age",
                "Positive for Cervical Cancer")
 
 Ratio = c()
+Count = c()
 Mean = c()
 Min = c()
 Max = c()
 SD = c()
+
 #Obtain descriptive stats
 for(i in names(data)){
   #Determine if percent or mean is applicable
   if (length(unique(data[[i]])) == 2){
     Ratio = c(Ratio, paste0(round(mean(data[[i]]),4) * 100, "%"))
+    Count = c(Count, length(which(data[[i]] == 1)))
     Mean  = c(Mean, "")
     Min   = c(Min, "")
     Max   = c(Max, "")
     SD    = c(SD, "")
   }else{
     Ratio = c(Ratio, "")
+    Count = c(Count, "")
     Mean  = c(Mean, round(mean(data[[i]]),2))
     Min   = c(Min, min(data[[i]]))
     Max   = c(Max, max(data[[i]]))
@@ -74,7 +78,23 @@ for(i in names(data)){
   }
 }
 
-records = as.data.frame(t(as.data.frame(rbind(Term, Ratio, Mean, Min, Max, SD))))
+#Decided to split into 2 types for better presentation...
+
+#Binary variables
+binTerm = Term[c(5,8,10,12:21)]
+Percentage = Ratio[c(5,8,10,12:21)]
+Count = Count[c(5,8,10,12:21)]
+
+#Quantitative variables
+quantTerm = c(Term[c(1:4, 6,7,9)], rep("",6))
+Mean = c(Mean[c(1:4, 6,7,9)], rep("",6))
+Min  = c(Min[c(1:4, 6,7,9)], rep("",6))
+Max  = c(Max[c(1:4, 6,7,9)], rep("",6))
+SD   = c(SD[c(1:4, 6,7,9)], rep("",6))
+
+
+records = as.data.frame(t(as.data.frame(rbind(binTerm, Count, Percentage,
+                                              quantTerm, Mean, Min, Max, SD))))
 records %>%
   gt() %>%
   gt_theme_nytimes() %>%
