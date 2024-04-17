@@ -24,7 +24,9 @@ data = read.csv("CervicalCancer.csv") %>% select(-"STDs.AIDS") #None of the pati
 
 ## Introduction
 
-*Intro on cerv cancer, what we want to know...*
+Cervical cancer is a disease that affects around 200,000 women per year in the United States. It has minor symptoms and is difficult to detect without a screening. However, according to *American Cancer Society*, if detected early, cervical cancer is one of the most successfully treatable cancers with over an 80% survival rate if detected in its first year. 
+
+For this reason, the main goal of our study is to determine which lifestyle and sexual factors significantly contribute to the presence of cervical cancer in patients so they can get timely screenings and treatment.
 
 ## Exploring the Data
 
