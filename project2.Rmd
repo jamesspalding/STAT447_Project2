@@ -110,16 +110,20 @@ records %>%
 
 ```
 
-*Explain variables*
+In our study, there are a total of 647 patients; 24 are positive for cervical cancer, or around 4%. A few noteworthy statistics in *table 1* are that the mean age of patients is around 27 years old, around 65% have used hormonal contraceptives for a mean of 2.25 years, and around 9% have had some sort of STD with HIV being the most common at an overall percentage of 1.85%. Using this information, we are able to perform various tests to determine which of these variables are significant to the presence of cervical cancer.
 
 ## Statistical Methods
 
-*Perm tests for significance, bootstrap and perm tests for differences?, bootstrap for multi reg*
+*Perm tests for significance* 
 
-## Results
+*fisher's test for qualitative,*
+
+*bootstrap and perm tests for differences?*
+
+*bootstrap for multi reg*
+
+## Results and Conclusion
 
 *Describe results from tests*
-
-## Conclusion
 
 *Explain what the results mean/conclude*
