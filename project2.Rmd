@@ -95,12 +95,17 @@ SD   = c(SD[c(1:4, 6,7,9)], rep("",6))
 
 records = as.data.frame(t(as.data.frame(rbind(binTerm, Count, Percentage,
                                               quantTerm, Mean, Min, Max, SD))))
+
 records %>%
   gt() %>%
   gt_theme_nytimes() %>%
   tab_header(title="Table 1: Variables explained.") %>%
-  tab_spanner(label="Binary Terms", columns = Term) %>%
-  tab_spanner(label="Summary Statistics", columns = c(Ratio, Mean, Min, Max, SD))
+  tab_spanner(label="Binary Terms", columns = c(binTerm, Count, Percentage)) %>%
+  tab_spanner(label="Quantitative Terms", columns = c(quantTerm, Mean, Min, Max, SD)) %>%
+  cols_label(binTerm = " ", quantTerm = " ")
+
+
+
 ```
 
 
