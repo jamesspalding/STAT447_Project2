@@ -24,6 +24,8 @@ data = read.csv("CervicalCancer.csv") %>% select(-"STDs.AIDS") #None of the pati
 
 ## Introduction
 
+*Intro on cerv cancer, what we want to know...*
+
 ## Exploring the Data
 
 ```{r, include = T}
@@ -108,10 +110,16 @@ records %>%
 
 ```
 
-
+*Explain variables*
 
 ## Statistical Methods
 
+*Perm tests for significance, bootstrap and perm tests for differences?, bootstrap for multi reg*
+
 ## Results
 
+*Describe results from tests*
+
 ## Conclusion
+
+*Explain what the results mean/conclude*
