@@ -16,15 +16,25 @@ library(gt)
 library(gtExtras)
 library(gridExtra)
 library(ggpubr)
+library(boot)
 ```
 
 ```{r}
 data = read.csv("CervicalCancer.csv") %>% select(-"STDs.AIDS") #None of the patients had AIDS
+
+#split to positive and negative
+positiveData = data %>%
+  filter(Biopsy == 1)
+
+negativeData = data %>%
+  filter(Biopsy == 0)
 ```
 
 ## Introduction
 
-*Intro on cerv cancer, what we want to know...*
+Cervical cancer is a disease that affects around 200,000 women per year in the United States. It has minor symptoms and is difficult to detect without a screening. However, according to *American Cancer Society*, if detected early, cervical cancer is one of the most successfully treatable cancers with over an 80% survival rate if detected in its first year. 
+
+For this reason, the main goal of our study is to determine which lifestyle and sexual factors significantly contribute to the presence of cervical cancer in patients so they can get timely screenings and treatment.
 
 ## Exploring the Data
 
@@ -105,15 +115,13 @@ records %>%
   tab_spanner(label="Binary Terms", columns = c(binTerm, Count, Percentage)) %>%
   tab_spanner(label="Quantitative Terms", columns = c(quantTerm, Mean, Min, Max, SD)) %>%
   cols_label(binTerm = " ", quantTerm = " ")
-
-
-
 ```
 
 In our study, there are a total of 647 patients; 24 are positive for cervical cancer, or around 4%. A few noteworthy statistics in *table 1* are that the mean age of patients is around 27 years old, around 65% have used hormonal contraceptives for a mean of 2.25 years, and around 9% have had some sort of STD with HIV being the most common at an overall percentage of 1.85%. Using this information, we are able to perform various tests to determine which of these variables are significant to the presence of cervical cancer.
 
 ## Statistical Methods
 
+<<<<<<< HEAD
 ```{r, warning=FALSE}
 attach(data)
 difference_function <- function(x, test_to_run = mean) {
@@ -239,14 +247,70 @@ matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
 
 
 ## Results
+=======
+*All analysis conducted in R 4.2.2*
+
+Because of the very small percentage of positive patients, all analysis will be conducted using nonparametric methods.
+>>>>>>> eacfd6cd90f5987c6542bb65a4380bd0a3d4e1c9
 
 *Perm tests for significance* 
 
 *fisher's test for qualitative,*
 
-*bootstrap and perm tests for differences?*
 
-*bootstrap for multi reg*
+```{r}
+#bootstrap and perm tests for differences?
+
+
+```
+
+```{r}
+#bootstrap for multi reg
+obs.mod = lm(Biopsy~., data = data)
+
+
+e = obs.mod$residuals
+modsummary = summary(obs.mod)
+
+fObs = modsummary$fstatistic[1]
+tObs = c()
+for(i in 2:21){
+  tObs = c(tObs, modsummary$coefficients[i,3])
+}
+
+bootData = data %>%
+  select(-Biopsy) ; bootData$e = rep(999, 647)
+
+nboot=1000
+tBoot = array(dim = c(20,1,nboot))
+fBoot = c()
+for (i in 1:nboot){
+  eboot = sample(e,replace=TRUE)
+  bootData$e = eboot
+  
+  boot.mod = lm(e~., data=bootData)
+  modsummaryP=summary(boot.mod)
+
+  for(j in 2:21){
+    tBoot[j-1,1,i] = modsummary$coefficients[j,3]
+  }
+  
+  fBoot = c(fBoot,modsummaryP$fstatistic[1])
+}
+
+#Overall test
+sum(fBoot>=fObs)/nboot #.03 that at least 1 is significant
+
+#Individual tests
+for(i in 1:20){
+  if(sum(abs(tBoot[i,,])>=abs(tObs))/nboot < .06){
+    print(names(data)[i])
+    print(sum(abs(tBoot[i,,])>=abs(tObs))/nboot)
+  }
+}
+
+#Only STDs.molluscum.contagiosum appears significant. Maybe dont include this.
+```
 
 ## Results and Conclusion
 
