@@ -24,6 +24,8 @@ data = read.csv("CervicalCancer.csv") %>% select(-"STDs.AIDS") #None of the pati
 
 ## Introduction
 
+*Intro on cerv cancer, what we want to know...*
+
 ## Exploring the Data
 
 ```{r, include = T}
@@ -108,16 +110,16 @@ records %>%
 
 ```
 
-
+In our study, there are a total of 647 patients; 24 are positive for cervical cancer, or around 4%. A few noteworthy statistics in *table 1* are that the mean age of patients is around 27 years old, around 65% have used hormonal contraceptives for a mean of 2.25 years, and around 9% have had some sort of STD with HIV being the most common at an overall percentage of 1.85%. Using this information, we are able to perform various tests to determine which of these variables are significant to the presence of cervical cancer.
 
 ## Statistical Methods
 
-```{r}
+```{r, warning=FALSE}
+attach(data)
 difference_function <- function(x, test_to_run = mean) {
-  
   function_list <- list(
-    Cancer = c(x[Biopsy == 1]),
-    No_Cancer = c(x[Biopsy == 0])
+    Cancer = c(x[data$Biopsy == 1]),
+    No_Cancer = c(x[data$Biopsy == 0])
   )
   
   
@@ -129,7 +131,7 @@ difference_function <- function(x, test_to_run = mean) {
   tot=m+n
   Dobs=test_to_run(dat1)-test_to_run(dat2)
 
-  nperm=1000
+  nperm=10000
   Dperm=rep(0,nperm)
   alldat=c(dat1,dat2)
 
@@ -144,28 +146,26 @@ difference_function <- function(x, test_to_run = mean) {
   pvalue
 }
 
-to_test <- c(2,3,4,6,7,9,11)
-
-#to_test <- c(data$Number.of.sexual.partners,data$First.sexual.intercourse,data$Num.of.pregnancies,
-#             data$Smokes..years.,data$Smokes..packs.year.,data$Hormonal.Contraceptives..years.,
-#             data$IUD..years.)
-
 p_values_mean <- c()
 p_values_var <- c()
 p_values_median <- c()
 
-for(i in length(to_test)) {
-  p_values_mean[i] <- difference_function(to_test[i])
-  p_values_var[i] <- difference_function(to_test[i], var)
-  p_values_median[i] <- difference_function(to_test[i], median)
+vars <- c("Age","Number.of.sexual.partners", "First.sexual.intercourse", "Num.of.pregnancies",
+          "Smokes..years.", "Smokes..packs.year.", "Hormonal.Contraceptives..years.",
+          "IUD..years.")
+
+for(i in 1:length(vars)) {
+  p_values_mean[i] <- difference_function(data[,vars[i]])
+  p_values_var[i] <- difference_function(data[,vars[i]], var)
+  p_values_median[i] <- difference_function(data[,vars[i]], median)
 }
 
-explanatory_variables <- c("Number of sexual partners","Age of first sexual intercourse","Num of pregnancies",
+explanatory_variables <- c("Age","Number of sexual partners","Age of first sexual intercourse","Num of pregnancies",
                            "Years smoking", "Packs smoked a year", "Years using Hormonal Contraceptives",
                            "Years using IUD")
 
 permutation_tests <- data.frame(
-  Variable = explanatory_variables$variables,
+  Variable = explanatory_variables,
   Pval_mean = p_values_mean,
   Pval_var = p_values_var,
   Pval_median = p_values_median
@@ -175,12 +175,81 @@ permutation_tests %>%
   gt() %>%
   gt_theme_nytimes() %>%
   tab_header(title="Table : Probabilities of Two-Sample Permutation Tests")
-
-head(data)
 ```
+
+```{r}
+# Fisher's Exact Test for 2x2
+
+fisher = function(x) {
+  
+  test = matrix(c(sum(data[,x]==1 & data[,"Biopsy"]==1),
+         sum(data[,x]==0 & data[,"Biopsy"]==1),
+         sum(data[,x]==1 & data[,"Biopsy"]==0),
+         sum(data[,x]==0 & data[,"Biopsy"]==0)), nrow=2)
+  
+  fisher.test(test, alternative="greater")$p.value
+}
+
+vars2 = c("Smokes","Hormonal.Contraceptives","IUD","STDs","STDs.condylomatosis",
+           "STDs.syphilis","STDs.pelvic.inflammatory.disease","STDs.genital.herpes",
+           "STDs.molluscum.contagiosum","STDs.HIV","STDs.Hepatitis.B","STDs.HPV")
+
+p_values = c()
+
+for(j in 1:length(vars2)) {
+  p_values[j] = fisher(vars2[j])
+}
+
+explanatory_variables2 = c("Smokes", "Hormonal Contraceptives", "IUD",
+                            "STDs", "Condylomatosis", "Syphilis", "Pelvic Disease",
+                            "Genital Herpes", "Molluscum Contagiosum", "HIV",
+                            "Hepatitis B", "HPV")
+
+permutation_tests2 = data.frame(
+  Variable = explanatory_variables2,
+  Pval = p_values
+)
+
+permutation_tests2 %>%
+  gt() %>%
+  gt_theme_nytimes() %>%
+  tab_header(title="Table : Probabilities of Fisher's Exact Tests")
+
+print("HPV, pval = 1")
+matrix(c(sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==1),
+         sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==1),
+         sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==0),
+         sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==0)), nrow=2)
+
+print("genital herpes, pval < .05")
+matrix(c(sum(data[,"STDs.genital.herpes"]==1 & data[,"Biopsy"]==1),
+         sum(data[,"STDs.genital.herpes"]==0 & data[,"Biopsy"]==1),
+         sum(data[,"STDs.genital.herpes"]==1 & data[,"Biopsy"]==0),
+         sum(data[,"STDs.genital.herpes"]==0 & data[,"Biopsy"]==0)), nrow=2)
+
+print("stds, pval < .05")
+matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
+         sum(data[,"STDs"]==0 & data[,"Biopsy"]==1),
+         sum(data[,"STDs"]==1 & data[,"Biopsy"]==0),
+         sum(data[,"STDs"]==0 & data[,"Biopsy"]==0)), nrow=2)
+```
+
+
 
 
 
 ## Results
 
-## Conclusion
+*Perm tests for significance* 
+
+*fisher's test for qualitative,*
+
+*bootstrap and perm tests for differences?*
+
+*bootstrap for multi reg*
+
+## Results and Conclusion
+
+*Describe results from tests*
+
+*Explain what the results mean/conclude*
