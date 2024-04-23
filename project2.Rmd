@@ -122,8 +122,48 @@ In our study, there are a total of 647 patients; 24 are positive for cervical ca
 
 ## Statistical Methods
 
+*All analysis conducted in R 4.2.2*
 
-First off, we are interested in looking at the quantitative variables in our data set to uncover if any are significant in detecting the presence of cervical cancer in patients. For this, we are going to use a two-sided two-sample permutation test with the first sample being patients with cervical cancer and the other being patients without. We are interested in looking to uncover significant quantitative variables in terms of the mean, variance, and medians. For our tests we are using a significance level($\alpha$) equal to .05.
+```{r, eval = F}
+#correlation test
+
+corPerm = function(x, y, nperm=10000){
+  r.perm=rep(0,nperm)
+  r.obs=cor(x,y)
+  
+  for(i in 1:nperm){
+    y.permuted=sample(y)
+    r.perm[i]=cor(x,y.permuted)
+  }
+  
+  return(sum(r.perm>=r.obs)/nperm)
+}
+
+
+corTable = data.frame(var1 = c(),
+                      var2 = c(),
+                      pvals = c())
+
+for(p in 1:21){
+  print(names(data)[p])
+  for(q in 1:21){
+    print(names(data)[q])
+    temp = data.frame(names(data)[p],
+                      names(data)[q],
+                      corPerm(data[[p]], data[[q]], nperm = 1000))
+    corTable = rbind(corTable, temp)
+  }
+}
+
+corTable2 = corTable[2:441,]
+corTable2 = corTable2[-seq(from = 22, to = 440, by=22),] #remove cor with itself
+
+sig = corTable2[which(corTable2$corPerm.data..p....data..q....nperm...1000. > .7),]
+```
+
+To begin, we decided to look into correlation between variables. As the data is non-parametric, we will use Pearson's $\rho$ coefficient and permute the data 1,000 times per test to save time. With 21 variables, there are 441 different correlation values; after removing correlation with itself, there are 420 values. Of these, around 100 had a $\rho$ value greater than 0.7. When looking specifically at the biopsy variable, the following variables have a high correlation: HPV, Hepatitis, Pelvic Inflammatory Disease, Molluscum Contagiosum, Syphilis, and Number of Sexual Partners. All of these variables are significant, and many will appear later in other tests.
+
+Next, we are interested in looking at the quantitative variables in our data set to uncover if any are significant in detecting the presence of cervical cancer in patients. For this, we are going to use a two-sided two-sample permutation test with the first sample being patients with cervical cancer and the other being patients without. We are interested in looking to uncover significant quantitative variables in terms of the mean, variance, and medians. For our tests we are using a significance level($\alpha$) equal to .05.
 
 ```{r, warning=FALSE, include=T}
 attach(data)
@@ -190,7 +230,7 @@ permutation_tests %>%
 
 As you can see above in *table 2*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
 
-Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significane level($\alpha$) of .05 for this test.
+Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significance level($\alpha$) of .05 for this test.
 
 ```{r, include = T, message=F}
 # Fisher's Exact Test for 2x2
@@ -252,9 +292,9 @@ m3 = data.frame(matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
 
 
 grid.arrange(
-  tableGrob(m1, theme = ttheme_minimal()),
-  tableGrob(m2, theme = ttheme_minimal()),
-  tableGrob(m3, theme = ttheme_minimal()),
+  tableGrob(m1, theme = ttheme_minimal(), rows = c("",""), cols = c("HPV:","P=1")),
+  tableGrob(m2, theme = ttheme_minimal(), rows = c("",""), cols = c("Herpes:","P<.05")),
+  tableGrob(m3, theme = ttheme_minimal(), rows = c("",""), cols = c("STDs:","P<.05")),
   nrow=1)
 
 
@@ -262,25 +302,6 @@ grid.arrange(
 
 
 As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeable close with a p-value of .069.
-
-
-
-## Results
-
-*All analysis conducted in R 4.2.2*
-
-Because of the very small percentage of positive patients, all analysis will be conducted using nonparametric methods.
-
-*Perm tests for significance* 
-
-*fisher's test for qualitative,*
-
-
-```{r}
-#bootstrap and perm tests for differences?
-
-
-```
 
 ```{r}
 #bootstrap for multi reg
@@ -317,6 +338,7 @@ for (i in 1:nboot){
 }
 
 #Overall test
+print("At least 1 is significant:")
 sum(fBoot>=fObs)/nboot #.03 that at least 1 is significant
 
 #Individual tests
@@ -330,7 +352,15 @@ for(i in 1:20){
 #Only STDs.molluscum.contagiosum appears significant. Maybe dont include this.
 ```
 
+Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that at least 1 of the factors has a $\beta$ value not equal to 0. By using a bootstrap test with 10,000 iterations, we were able to obtain a p-value for this test, which came out as 0.039, and thus we reject the null hypothesis.
+
+Next, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
+
+
+
 ## Results and Conclusion
+
+
 
 *Describe results from tests*
 
