@@ -15,6 +15,7 @@ library(DescTools)
 library(gt)
 library(gtExtras)
 library(gridExtra)
+library(gtable)
 library(ggpubr)
 library(boot)
 ```
@@ -38,7 +39,7 @@ For this reason, the main goal of our study is to determine which lifestyle and 
 
 ## Exploring the Data
 
-```{r, include = T}
+```{r, include = T, fig.align = 'center'}
 ##### Summary Stats Table #####
 
 Term       = c("Age",
@@ -124,7 +125,7 @@ In our study, there are a total of 647 patients; 24 are positive for cervical ca
 
 First off, we are interested in looking at the quantitative variables in our data set to uncover if any are significant in detecting the presence of cervical cancer in patients. For this, we are going to use a two-sided two-sample permutation test with the first sample being patients with cervical cancer and the other being patients without. We are interested in looking to uncover significant quantitative variables in terms of the mean, variance, and medians. For our tests we are using a significance level($\alpha$) equal to .05.
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, include=T}
 attach(data)
 difference_function <- function(x, test_to_run = mean) {
   function_list <- list(
@@ -190,7 +191,8 @@ permutation_tests %>%
 As you can see above in *table 2*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
 
 Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significane level($\alpha$) of .05 for this test.
-```{r}
+
+```{r, include = T, message=F}
 # Fisher's Exact Test for 2x2
 
 fisher = function(x) {
@@ -210,7 +212,7 @@ vars2 = c("Smokes","Hormonal.Contraceptives","IUD","STDs","STDs.condylomatosis",
 p_values = c()
 
 for(j in 1:length(vars2)) {
-  p_values[j] = fisher(vars2[j])
+  p_values[j] = round(fisher(vars2[j]),2)
 }
 
 explanatory_variables2 = c("Smokes", "Hormonal Contraceptives", "IUD",
@@ -227,32 +229,44 @@ permutation_tests2 %>%
   gt() %>%
   gt_theme_nytimes() %>%
   tab_header(title="Table 3: Probabilities of Fisher's Exact Tests")
+```
 
-print("HPV, pval = 1")
-matrix(c(sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==1),
+```{r, include = T, fig.align = 'center'}
+#print("HPV, pval = 1")
+m1 = data.frame(matrix(c(sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==1),
          sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==1),
          sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==0),
-         sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==0)), nrow=2)
+         sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==0)), nrow=2))
 
-print("genital herpes, pval < .05")
-matrix(c(sum(data[,"STDs.genital.herpes"]==1 & data[,"Biopsy"]==1),
+#print("genital herpes, pval < .05")
+m2 = data.frame(matrix(c(sum(data[,"STDs.genital.herpes"]==1 & data[,"Biopsy"]==1),
          sum(data[,"STDs.genital.herpes"]==0 & data[,"Biopsy"]==1),
          sum(data[,"STDs.genital.herpes"]==1 & data[,"Biopsy"]==0),
-         sum(data[,"STDs.genital.herpes"]==0 & data[,"Biopsy"]==0)), nrow=2)
+         sum(data[,"STDs.genital.herpes"]==0 & data[,"Biopsy"]==0)), nrow=2))
 
-print("stds, pval < .05")
-matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
+#print("stds, pval < .05")
+m3 = data.frame(matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
          sum(data[,"STDs"]==0 & data[,"Biopsy"]==1),
          sum(data[,"STDs"]==1 & data[,"Biopsy"]==0),
-         sum(data[,"STDs"]==0 & data[,"Biopsy"]==0)), nrow=2)
+         sum(data[,"STDs"]==0 & data[,"Biopsy"]==0)), nrow=2))
+
+
+grid.arrange(
+  tableGrob(m1, theme = ttheme_minimal()),
+  tableGrob(m2, theme = ttheme_minimal()),
+  tableGrob(m3, theme = ttheme_minimal()),
+  nrow=1)
+
+
 ```
+
 
 As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeable close with a p-value of .069.
 
 
 
 ## Results
-=======
+
 *All analysis conducted in R 4.2.2*
 
 Because of the very small percentage of positive patients, all analysis will be conducted using nonparametric methods.
