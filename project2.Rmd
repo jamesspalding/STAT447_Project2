@@ -354,7 +354,7 @@ for(i in 1:20){
 
 Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that at least 1 of the factors has a $\beta$ value not equal to 0. By using a bootstrap test with 10,000 iterations, we were able to obtain a p-value for this test, which came out as 0.039, and thus we reject the null hypothesis.
 
-Next, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
+To figure out which of these variables were significant, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
 
 
 
