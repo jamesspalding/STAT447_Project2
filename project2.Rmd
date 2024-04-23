@@ -121,7 +121,9 @@ In our study, there are a total of 647 patients; 24 are positive for cervical ca
 
 ## Statistical Methods
 
-<<<<<<< HEAD
+
+First off, we are interested in looking at the quantitative variables in our data set to uncover if any are significant in detecting the presence of cervical cancer in patients. For this, we are going to use a two-sided two-sample permutation test with the first sample being patients with cervical cancer and the other being patients without. We are interested in looking to uncover significant quantitative variables in terms of the mean, variance, and medians. For our tests we are using a significance level($\alpha$) equal to .05.
+
 ```{r, warning=FALSE}
 attach(data)
 difference_function <- function(x, test_to_run = mean) {
@@ -168,7 +170,7 @@ for(i in 1:length(vars)) {
   p_values_median[i] <- difference_function(data[,vars[i]], median)
 }
 
-explanatory_variables <- c("Age","Number of sexual partners","Age of first sexual intercourse","Num of pregnancies",
+explanatory_variables <- c("Age","Number of sexual partners","Age of first sexual intercourse","Number of pregnancies",
                            "Years smoking", "Packs smoked a year", "Years using Hormonal Contraceptives",
                            "Years using IUD")
 
@@ -182,9 +184,12 @@ permutation_tests <- data.frame(
 permutation_tests %>%
   gt() %>%
   gt_theme_nytimes() %>%
-  tab_header(title="Table : Probabilities of Two-Sample Permutation Tests")
+  tab_header(title="Table 2: Probabilities of Two-Sample Permutation Tests")
 ```
 
+As you can see above in *table 2*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
+
+Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significane level($\alpha$) of .05 for this test.
 ```{r}
 # Fisher's Exact Test for 2x2
 
@@ -221,7 +226,7 @@ permutation_tests2 = data.frame(
 permutation_tests2 %>%
   gt() %>%
   gt_theme_nytimes() %>%
-  tab_header(title="Table : Probabilities of Fisher's Exact Tests")
+  tab_header(title="Table 3: Probabilities of Fisher's Exact Tests")
 
 print("HPV, pval = 1")
 matrix(c(sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==1),
@@ -242,7 +247,7 @@ matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
          sum(data[,"STDs"]==0 & data[,"Biopsy"]==0)), nrow=2)
 ```
 
-
+As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeable close with a p-value of .069.
 
 
 
@@ -251,7 +256,6 @@ matrix(c(sum(data[,"STDs"]==1 & data[,"Biopsy"]==1),
 *All analysis conducted in R 4.2.2*
 
 Because of the very small percentage of positive patients, all analysis will be conducted using nonparametric methods.
->>>>>>> eacfd6cd90f5987c6542bb65a4380bd0a3d4e1c9
 
 *Perm tests for significance* 
 
