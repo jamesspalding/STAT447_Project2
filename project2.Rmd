@@ -145,9 +145,9 @@ corTable = data.frame(var1 = c(),
                       pvals = c())
 
 for(p in 1:21){
-  print(names(data)[p])
+  #print(names(data)[p])
   for(q in 1:21){
-    print(names(data)[q])
+    #print(names(data)[q])
     temp = data.frame(names(data)[p],
                       names(data)[q],
                       corPerm(data[[p]], data[[q]], nperm = 1000))
@@ -159,6 +159,7 @@ corTable2 = corTable[2:441,]
 corTable2 = corTable2[-seq(from = 22, to = 440, by=22),] #remove cor with itself
 
 sig = corTable2[which(corTable2$corPerm.data..p....data..q....nperm...1000. > .7),]
+sig
 ```
 
 To begin, we decided to look into correlation between variables. As the data is non-parametric, we will use Pearson's $\rho$ coefficient and permute the data 1,000 times per test to save time. With 21 variables, there are 441 different correlation values; after removing correlation with itself, there are 420 values. Of these, around 100 had a $\rho$ value greater than 0.7. When looking specifically at the biopsy variable, the following variables have a high correlation: HPV, Hepatitis, Pelvic Inflammatory Disease, Molluscum Contagiosum, Syphilis, and Number of Sexual Partners. All of these variables are significant, and many will appear later in other tests.
@@ -230,7 +231,7 @@ permutation_tests %>%
 
 As you can see above in *table 2*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
 
-Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significance level($\alpha$) of .05 for this test.
+Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy into a 2x2 table, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significance level($\alpha$) of .05 for this test.
 
 ```{r, include = T, message=F}
 # Fisher's Exact Test for 2x2
@@ -271,7 +272,9 @@ permutation_tests2 %>%
   tab_header(title="Table 3: Probabilities of Fisher's Exact Tests")
 ```
 
-```{r, include = T, fig.align = 'center'}
+As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeably close to being considered significant, returning a p-value of .069.
+
+```{r, include = T, fig.cap="Fisher's Test Matrices", fig.align = 'center'}
 #print("HPV, pval = 1")
 m1 = data.frame(matrix(c(sum(data[,"STDs.HPV"]==1 & data[,"Biopsy"]==1),
          sum(data[,"STDs.HPV"]==0 & data[,"Biopsy"]==1),
@@ -296,12 +299,8 @@ grid.arrange(
   tableGrob(m2, theme = ttheme_minimal(), rows = c("",""), cols = c("Herpes:","P<.05")),
   tableGrob(m3, theme = ttheme_minimal(), rows = c("",""), cols = c("STDs:","P<.05")),
   nrow=1)
-
-
 ```
-
-
-As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeable close with a p-value of .069.
+The above matrices seen in *Figure 1* are examples of the 2x2 tables that are created for the Fisher's Exact Test on 2x2 tables. The HPV 2x2 table is an example of the test returning a p-value of 1, this is because there was not found to be any patients that were diagnosed with HPV along with cervical cancer. The following tables, Herpes and STDs, are the tables that were constructed from our dataset to run the Fisher's Exact Test, where 1 patient was found to be diagnosed with Herpes and cervical cancer, and 6 patients were found to be diagnosed with STDs and cervical cancer. Note that each table sums to a total of 647, which is the total number of patients in our study.
 
 ```{r}
 #bootstrap for multi reg
@@ -352,7 +351,7 @@ for(i in 1:20){
 #Only STDs.molluscum.contagiosum appears significant. Maybe dont include this.
 ```
 
-Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that at least 1 of the factors has a $\beta$ value not equal to 0. By using a bootstrap test with 10,000 iterations, we were able to obtain a p-value for this test, which came out as 0.039, and thus we reject the null hypothesis.
+Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that at least 1 of the factors has a $\beta$ value not equal to 0. By using a bootstrap test with 10,000 iterations, we were able to obtain a p-value for this test, which came out as 0.039, and thus we reject the null hypothesis. We can then conclude that at least one variable is significant in predicting the presence of cervical cancer in a patient.
 
 To figure out which of these variables were significant, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
 
@@ -360,8 +359,12 @@ To figure out which of these variables were significant, we performed a bootstra
 
 ## Results and Conclusion
 
+The purpose of this study was to determine what factors we are able to determine to be significant in identifying patients with cervical cancer. *table 1* laid out all of the exploration into the qualitative and quantitative variables at our disposal. Our first test was interested in identifying any correlation the variables have with the variable signifying the patients diagnosed with cervical cancer and those not. Our testing showed that the variables HPV, Hepatitis, Pelvic Inflammatory Disease, Moluscum Contagiosum, Syphilis, and Number of Sexual Partners all displayed a high correlation with our cervical cancer variable. 
 
+We then ran two-sided two-sample permutation tests on all of the quantitative variables, looking at their mean, variance, and median. There was only one significant finding, which was a difference in the variance for the variable Years using Hormonal Contraceptives. Also, this variable gave the lowest p-value for a difference in means out of all quantitative variables, but was not found significant at a 5% significance level. 
 
-*Describe results from tests*
+We were able to uncover more significant variables from Fisher’s Exact Test for 2x2 tables, looking across all of the qualitative variables in our data set. The variables found to be significant were STDs, Condylomatosis, and Genital Herpes.
 
-*Explain what the results mean/conclude*
+Lastly, we wanted to determine which variables are useful in predicting the presence of cervical cancer using bootstrapping for multiple regression models. The test showed that at least one variable is significant in predicting the presence of cervical cancer. After using bootstrapping for regression again, we were able to find the variable Molluscum Contagiosum to be the only significant variable in predicting the presence of cervical cancer.
+
+In the end, we were able to find the variables STDs, specifically Condylomatosis and Genital Herpes, and Molluscum Contagiosum to be the most significant variables in detecting the presence of cervical cancer in patients. We can then conclude our study with high confidence in suggesting to scientists and doctors to be on the lookout for cervical cancer in patients that are diagnosed with the diseases that we found to be significant for detection.
