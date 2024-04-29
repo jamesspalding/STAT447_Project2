@@ -120,12 +120,14 @@ records %>%
 
 In our study, there are a total of 647 patients; 24 are positive for cervical cancer, or around 4%. A few noteworthy statistics in *table 1* are that the mean age of patients is around 27 years old, around 65% have used hormonal contraceptives for a mean of 2.25 years, and around 9% have had some sort of STD with HIV being the most common at an overall percentage of 1.85%. Using this information, we are able to perform various tests to determine which of these variables are significant to the presence of cervical cancer.
 
+\newpage
+
 ## Statistical Methods
 
 *All analysis conducted in R 4.2.2*
 
 ```{r, eval = F}
-#correlation test
+#pierson test
 
 corPerm = function(x, y, nperm=10000){
   r.perm=rep(0,nperm)
@@ -158,11 +160,38 @@ for(p in 1:21){
 corTable2 = corTable[2:441,]
 corTable2 = corTable2[-seq(from = 22, to = 440, by=22),] #remove cor with itself
 
-sig = corTable2[which(corTable2$corPerm.data..p....data..q....nperm...1000. > .7),]
-sig
+sig = corTable2[which(corTable2$corPerm.data..p....data..q....nperm...1000.<0.05),]
 ```
 
-To begin, we decided to look into correlation between variables. As the data is non-parametric, we will use Pearson's $\rho$ coefficient and permute the data 1,000 times per test to save time. With 21 variables, there are 441 different correlation values; after removing correlation with itself, there are 420 values. Of these, around 100 had a $\rho$ value greater than 0.7. When looking specifically at the biopsy variable, the following variables have a high correlation: HPV, Hepatitis, Pelvic Inflammatory Disease, Molluscum Contagiosum, Syphilis, and Number of Sexual Partners. All of these variables are significant, and many will appear later in other tests.
+```{r}
+#Spearman test
+pvals = c()
+for(i in 1:20){
+  pvals[i] = cor.test(data$Biopsy, data[[i]], method = "spearman")$p.val
+}
+
+# names(data)[which(pvals < 0.05)]
+# round(pvals[which(pvals < 0.05)],2)
+
+cornames = c("STDs", "Condylomatosis", "Genital Herpes", "HIV")
+spearp = round(pvals[which(pvals < 0.05)],3)
+pearsp = c(0.004,0.009,0.039,0.066) #hard coding values so test doesnt run each time
+```
+
+To begin, we decided to look into correlation between variables. We first did a permutation test of  Pearson's $r$ coefficient 1,000 times per test. With 21 variables, there are 441 different correlation values; after removing correlation with itself, there are 420 values. Looking strictly at correlation with the Biopsy variable, there are 3 significant variables: STDs, Condylomatosis, and Genital Herpes. 
+
+To confirm our observations, we ran the test again but with Spearman's $\rho$ instead. Since this test can find nonlinear relationships, it may come up with more significant variables than the $r$ test. As suspected, all of the previous variables appeared significant again, with the added variable of HIV; indicating a possible nonlinear relationship between Biopsy and HIV.
+
+Individual Pvalues are shown below in *table 2*:
+
+```{r, include = T}
+data.frame(cornames, pearsp, spearp) %>%
+  gt() %>%
+  gt_theme_nytimes() %>%
+  tab_header(title="Table 2: Correlation with Biopsy") %>%
+  tab_spanner(label="Pvalues", columns = c(pearsp, spearp)) %>%
+  cols_label(cornames = "Variable", pearsp = "Pearson r", spearp = "Spearman p")
+```
 
 Next, we are interested in looking at the quantitative variables in our data set to uncover if any are significant in detecting the presence of cervical cancer in patients. For this, we are going to use a two-sided two-sample permutation test with the first sample being patients with cervical cancer and the other being patients without. We are interested in looking to uncover significant quantitative variables in terms of the mean, variance, and medians. For our tests we are using a significance level($\alpha$) equal to .05.
 
@@ -226,10 +255,10 @@ permutation_tests <- data.frame(
 permutation_tests %>%
   gt() %>%
   gt_theme_nytimes() %>%
-  tab_header(title="Table 2: Probabilities of Two-Sample Permutation Tests")
+  tab_header(title="Table 3: Probabilities of Two-Sample Permutation Tests")
 ```
 
-As you can see above in *table 2*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
+As you can see above in *table 3*, there was no significant quantitative variable found in terms of the means or median between the two samples. Then for the two-sided two-sample permutation test for a difference in the variance, a significant difference was found (with a p-value of around .02) for the variable years using hormonal contraceptives. Also, this variable gave the lowest p-value out of all the quantitative variables when testing for a difference in sample means, giving a p-value of around .09.
 
 Next, we are interested in testing all of the qualitative variables in our data set to uncover significant differences between patients diagnosed with cervical cancer to those without. For this, we are going to use Fisher's Exact Test for 2x2 tables. We are able to do this by grouping each categorical variable with the categorical variable Biopsy into a 2x2 table, which is the variable informing us whether a patient is diagnosed with cervical cancer or not. We will be using a significance level($\alpha$) of .05 for this test.
 
@@ -269,10 +298,10 @@ permutation_tests2 = data.frame(
 permutation_tests2 %>%
   gt() %>%
   gt_theme_nytimes() %>%
-  tab_header(title="Table 3: Probabilities of Fisher's Exact Tests")
+  tab_header(title="Table 4: Probabilities of Fisher's Exact Tests")
 ```
 
-As you can see above in *table 3*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeably close to being considered significant, returning a p-value of .069.
+As you can see above in *table 4*, there was found to be three variables with significant differences between patients with cervical cancer to those without. Those include the variable STDs, which returned a p-value of .019, the variable Condylomatosis, which returned a p-value of .032, and lastly the variable Genital Herpes, which returned a p-value of .037. The variable HIV is noticeably close to being considered significant, returning a p-value of .069.
 
 ```{r, include = T, fig.cap="Fisher's Test Matrices", fig.align = 'center'}
 #print("HPV, pval = 1")
@@ -355,7 +384,7 @@ Finally, we wanted to create a regression model to determine which factors are u
 
 To figure out which of these variables were significant, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
 
-
+\newpage
 
 ## Results and Conclusion
 
