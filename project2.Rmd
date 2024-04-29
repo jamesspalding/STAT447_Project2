@@ -127,7 +127,7 @@ In our study, there are a total of 647 patients; 24 are positive for cervical ca
 *All analysis conducted in R 4.2.2*
 
 ```{r, eval = F}
-#pierson test
+#pearson test
 
 corPerm = function(x, y, nperm=10000){
   r.perm=rep(0,nperm)
@@ -331,69 +331,60 @@ grid.arrange(
 ```
 The above matrices seen in *Figure 1* are examples of the 2x2 tables that are created for the Fisher's Exact Test on 2x2 tables. The HPV 2x2 table is an example of the test returning a p-value of 1, this is because there was not found to be any patients that were diagnosed with HPV along with cervical cancer. The following tables, Herpes and STDs, are the tables that were constructed from our dataset to run the Fisher's Exact Test, where 1 patient was found to be diagnosed with Herpes and cervical cancer, and 6 patients were found to be diagnosed with STDs and cervical cancer. Note that each table sums to a total of 647, which is the total number of patients in our study.
 
-```{r}
-#bootstrap for multi reg
-obs.mod = lm(Biopsy~., data = data)
+```{r, eval = F}
+qualdata = data %>%
+  select(-c(1:4,6,7,9,11))
 
+my.mod = glm(Biopsy~., data = qualdata, family = "binomial")
 
-e = obs.mod$residuals
-modsummary = summary(obs.mod)
-
-fObs = modsummary$fstatistic[1]
-tObs = c()
-for(i in 2:21){
-  tObs = c(tObs, modsummary$coefficients[i,3])
-}
-
-bootData = data %>%
-  select(-Biopsy) ; bootData$e = rep(999, 647)
-
-nboot=1000
-tBoot = array(dim = c(20,1,nboot))
-fBoot = c()
-for (i in 1:nboot){
-  eboot = sample(e,replace=TRUE)
-  bootData$e = eboot
+logit.bootstrap = function(data, indices) {
   
-  boot.mod = lm(e~., data=bootData)
-  modsummaryP=summary(boot.mod)
-
-  for(j in 2:21){
-    tBoot[j-1,1,i] = modsummary$coefficients[j,3]
-  }
+  d = data[indices, ]
+  fit = glm(Biopsy~., data = d, family = "binomial")
   
-  fBoot = c(fBoot,modsummaryP$fstatistic[1])
+  return(coef(fit))
 }
 
-#Overall test
-print("At least 1 is significant:")
-sum(fBoot>=fObs)/nboot #.03 that at least 1 is significant
 
-#Individual tests
-for(i in 1:20){
-  if(sum(abs(tBoot[i,,])>=abs(tObs))/nboot < .06){
-    print(names(data)[i])
-    print(sum(abs(tBoot[i,,])>=abs(tObs))/nboot)
-  }
-}
+logit.boot = boot(data=qualdata, statistic=logit.bootstrap, R=10000)
 
-#Only STDs.molluscum.contagiosum appears significant. Maybe dont include this.
+logit.boot
+
+
+# Calculate confidence intervals (Bias corrected ="bca") for each coefficient
+
+boot.ci(logit.boot, type="bca", index=1) # Only intercept appears significant.
+boot.ci(logit.boot, type="bca", index=2)
+boot.ci(logit.boot, type="bca", index=3)
+boot.ci(logit.boot, type="bca", index=4)
+boot.ci(logit.boot, type="bca", index=5)
+boot.ci(logit.boot, type="bca", index=6)
+boot.ci(logit.boot, type="bca", index=7)
+#boot.ci(logit.boot, type="bca", index=8)
+#boot.ci(logit.boot, type="bca", index=9)
+#boot.ci(logit.boot, type="bca", index=10)
+boot.ci(logit.boot, type="bca", index=11)
+#boot.ci(logit.boot, type="bca", index=12)
+boot.ci(logit.boot, type="bca", index=13)
+
+#NONE are significant...
 ```
 
-Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that at least 1 of the factors has a $\beta$ value not equal to 0. By using a bootstrap test with 10,000 iterations, we were able to obtain a p-value for this test, which came out as 0.039, and thus we reject the null hypothesis. We can then conclude that at least one variable is significant in predicting the presence of cervical cancer in a patient.
 
-To figure out which of these variables were significant, we performed a bootstrap test, again with 10,000 iterations, on each of the 20 variables. Doing this, we were unfortunately only able to find 1 variable with a significant $\beta$ value. The variable was Molluscum Contagiosum, and it had a p-value of 0.05.
+Finally, we wanted to create a regression model to determine which factors are useful in predicting the presence of cervical cancer in a patient. As our data is in a binary 0,1 format, a logistic regression would be our best option. Our null hypothesis is that all factors have a $\beta$ value of 0, and thus are unhelpful in predicting the biopsy value. The alternative is that the factor has a $\beta$ value not equal to 0. 
+
+We first separated our variables to only those with binary output, as described in *table 1*. We then ran ran a permutation test on the model with 10,000 permutations, and created confidence intervals. However, this test was unfortunately inconclusive, as all of the confidence intervals contained 0, meaning we cannot reject the possibility of $\beta_i=0$ and therefore cannot reject the null hypothesis.
 
 \newpage
 
 ## Results and Conclusion
 
-The purpose of this study was to determine what factors we are able to determine to be significant in identifying patients with cervical cancer. *table 1* laid out all of the exploration into the qualitative and quantitative variables at our disposal. Our first test was interested in identifying any correlation the variables have with the variable signifying the patients diagnosed with cervical cancer and those not. Our testing showed that the variables HPV, Hepatitis, Pelvic Inflammatory Disease, Moluscum Contagiosum, Syphilis, and Number of Sexual Partners all displayed a high correlation with our cervical cancer variable. 
+The purpose of this study was to determine what factors we are able to determine to be significant in identifying patients with cervical cancer. *table 1* laid out all of the exploration into the qualitative and quantitative variables at our disposal. Our first test was interested in identifying any correlation the variables have with the variable signifying the patients diagnosed with cervical cancer and those not. Our testing showed that the variables STDs, Condylomatosis, Genital Herpes, and HIV all displayed a high correlation with our cervical cancer variable. 
 
 We then ran two-sided two-sample permutation tests on all of the quantitative variables, looking at their mean, variance, and median. There was only one significant finding, which was a difference in the variance for the variable Years using Hormonal Contraceptives. Also, this variable gave the lowest p-value for a difference in means out of all quantitative variables, but was not found significant at a 5% significance level. 
 
 We were able to uncover more significant variables from Fisher’s Exact Test for 2x2 tables, looking across all of the qualitative variables in our data set. The variables found to be significant were STDs, Condylomatosis, and Genital Herpes.
 
-Lastly, we wanted to determine which variables are useful in predicting the presence of cervical cancer using bootstrapping for multiple regression models. The test showed that at least one variable is significant in predicting the presence of cervical cancer. After using bootstrapping for regression again, we were able to find the variable Molluscum Contagiosum to be the only significant variable in predicting the presence of cervical cancer.
+Lastly, we wanted to determine which variables are useful in predicting the presence of cervical cancer using bootstrapping for logistic regression models. The test came out inconclusive, with none of the $\beta$ values having a significant slope.
 
-In the end, we were able to find the variables STDs, specifically Condylomatosis and Genital Herpes, and Molluscum Contagiosum to be the most significant variables in detecting the presence of cervical cancer in patients. We can then conclude our study with high confidence in suggesting to scientists and doctors to be on the lookout for cervical cancer in patients that are diagnosed with the diseases that we found to be significant for detection.
+In the end, we were able to find that STDs, specifically Condylomatosis and Genital Herpes, were the most significant variables in detecting the presence of cervical cancer in patients. We can then conclude our study with high confidence in suggesting to scientists and doctors to be on the lookout for cervical cancer in patients that are diagnosed with the diseases that we found to be significant for detection.
